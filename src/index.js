@@ -1,8 +1,7 @@
 require('dotenv').config();
-
 const express = require("express");
 const apiruta = require("./routes/ruta");
-const { sequelize, Carrera, Materia } = require('./db');
+const { Carrera, Materia } = require('./db');
 
 const app = express();
 

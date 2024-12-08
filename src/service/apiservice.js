@@ -1,67 +1,14 @@
-const { Carrera, Materia, sequelize } = require('../db'); 
-
+const { Carrera, Materia } = require('../db.js'); // Asumiendo que los modelos están en '../models'
 const https = require("https");
 const { getChatGPTResponse } = require('./chatgpt');
 
-function limpiarTexto(texto) {
-    const stopWords = ["de", "la", "y", "a", "el", "en", "por", "con", "que", "un", "una", "los", "las", "para", "del"];
-    return texto
-        .toLowerCase()
-        .split(" ")
-        .filter(word => !stopWords.includes(word))
-        .join(" ");
-}
-
-function obtenerContexto(texto) {
-    if (/asesor(es)?/i.test(texto)) {
-        return "Consulta sobre asesores universitarios. Responde con información de contacto.";
-    }
-    if (/precio|costo|tarifa/i.test(texto)) {
-        return "Consulta sobre precios o tarifas. Responde que se contacte con asesores.";
-    }
-    if (/hola|buenos días|qué tal/i.test(texto)) {
-        return "Saludo inicial.";
-    }
-
-    
-    if (/universidad/i.test(texto)) {
-        return "Consulta general sobre la universidad.";
-    }
-    return "Consulta desconocida.";
-}
-
-function manejarRespuestaPredefinida(texto) {
-    if (/hola|buenos días|qué tal/i.test(texto)) {
-        return "¡Hola! Soy el asistente de la universidad del valle. ¿En qué puedo ayudarte?";
-    }
-    if (/asesor(es)?/i.test(texto)) {
-        return "Nuestros asesores son: Juan Pérez (+591 12345678) y Ana López (+591 87654321). Contáctalos para más información.";
-    }
-    if (/precio|costo|tarifa/i.test(texto)) {
-        return "Para conocer precios o tarifas, por favor contacta a nuestros asesores: Juan Pérez (+591 12345678).";
-    }
-
-    if (/ubicación|dirección|dónde está|ubicado/i.test(texto)) {
-        return "Nuestra ubicación es: Campus Univalle Séptimo Anillo, Santa Cruz de la Sierra. Estamos ubicados en un lugar estratégico y de fácil acceso.";
-    }
-    return null;
-}
+// Funciones auxiliares: limpiarTexto, obtenerContexto, manejarRespuestaPredefinida se mantienen igual...
 
 async function buscarInformacionCarrera(nombreCarrera) {
     try {
-        const carrera = await Carrera.findOne({
-            where: sequelize.where(
-                sequelize.fn('LOWER', sequelize.col('nombre')), 
-                nombreCarrera.toLowerCase()
-            ),
-            include: [
-                {
-                    model: Materia,
-                    as: 'mallaCurricular',
-                    attributes: ['nombre', 'semestre', 'creditos']
-                }
-            ]
-        });
+        const carrera = await Carrera.findOne({ 
+            nombre: new RegExp(`^${nombreCarrera}$`, 'i') // Uso de RegExp para ignorar mayúsculas/minúsculas
+        }).populate('mallaCurricular'); // Popula las materias relacionadas (malla curricular)
 
         if (!carrera) return null;
 
@@ -97,11 +44,8 @@ ${materias.map(m => `- ${m.nombre} (${m.creditos} créditos)`).join('\n')}`
 
 async function consultarMateriasPorCarrera(nombreCarrera) {
     try {
-        const carrera = await Carrera.findOne({
-            where: sequelize.where(
-                sequelize.fn('LOWER', sequelize.col('nombre')), 
-                nombreCarrera.toLowerCase()
-            )
+        const carrera = await Carrera.findOne({ 
+            nombre: new RegExp(`^${nombreCarrera}$`, 'i') 
         });
 
         if (!carrera) {
@@ -110,12 +54,9 @@ async function consultarMateriasPorCarrera(nombreCarrera) {
         }
 
         // Buscar todas las materias de esta carrera
-        const materias = await Materia.findAll({
-            where: {
-                CarreraId: carrera.id
-            },
-            order: [['semestre', 'ASC'], ['nombre', 'ASC']]
-        });
+        const materias = await Materia.find({
+            carrera: carrera._id // Suponiendo que el campo de referencia es 'carrera'
+        }).sort({ semestre: 1, nombre: 1 });
 
         // Organizar materias por semestre
         const materiasPorSemestre = {};

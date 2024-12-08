@@ -1,44 +1,47 @@
-const { Sequelize, DataTypes } = require('sequelize');
+const mongoose = require('mongoose');
 
-// Configurar la conexión a SQLite
-const sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: './database.sqlite', // Ruta del archivo SQLite
-});
+// Conexión a MongoDB
+mongoose.connect('mongodb+srv://alielivm:xFoPEP3DSpH6q2zn@cluster0.8x3si.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
+    .then(() => console.log('Conectado a MongoDB'))
+    .catch((error) => console.error('Error al conectar a MongoDB:', error));
 
-// Modelo de Carrera
-const Carrera = sequelize.define('Carrera', {
+// Esquema para Carrera
+const CarreraSchema = new mongoose.Schema({
     nombre: {
-        type: DataTypes.STRING,
-        allowNull: false,
+        type: String,
+        required: true, // Equivalente a allowNull: false
     },
     descripcion: {
-        type: DataTypes.TEXT,
+        type: String, // TEXT en Sequelize se mapea a String en Mongoose
     },
-}, {
-    timestamps: false,
 });
 
-// Modelo de Materia en la malla curricular
-const Materia = sequelize.define('Materia', {
+// Esquema para Materia
+const MateriaSchema = new mongoose.Schema({
     nombre: {
-        type: DataTypes.STRING,
-        allowNull: false,
+        type: String,
+        required: true, // Equivalente a allowNull: false
     },
     creditos: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
+        type: Number, // INTEGER en Sequelize se mapea a Number en Mongoose
+        required: true,
     },
     semestre: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
+        type: Number,
+        required: true,
     },
-}, {
-    timestamps: false,
+    carrera: {
+        type: mongoose.Schema.Types.ObjectId, // Relación con Carrera
+        ref: 'Carrera', // Modelo de referencia
+        required: true,
+    },
 });
 
-// Relación: Una carrera tiene muchas materias
-Carrera.hasMany(Materia, { as: 'mallaCurricular' });
-Materia.belongsTo(Carrera);
+// Crear modelos
+const Carrera = mongoose.model('Carrera', CarreraSchema);
+const Materia = mongoose.model('Materia', MateriaSchema);
 
-module.exports = { sequelize, Carrera, Materia };
+module.exports = { Carrera, Materia };
