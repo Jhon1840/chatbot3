@@ -11,7 +11,7 @@ async function buscarInformacionCarrera(nombreCarrera) {
         }).populate('mallaCurricular'); // Popula las materias relacionadas (malla curricular)
 
         if (!carrera) return null;
-
+        
         const materiasPorSemestre = {};
         carrera.mallaCurricular.forEach(materia => {
             if (!materiasPorSemestre[materia.semestre]) {
@@ -106,14 +106,8 @@ async function EnviarMensajeWhastpapp(texto, number) {
         );
 
         const consultasMaterias = {
-            'materias de psicología': 'Psicología',
-            'malla curricular de psicología': 'Psicología',
             'materias de derecho': 'Derecho',
             'malla curricular de derecho': 'Derecho',
-            'materias de medicina': 'Medicina', 
-            'malla curricular de medicina': 'Medicina',
-            'materias de ingeniería de sistemas': 'Ingeniería de Sistemas',
-            'malla curricular de ingeniería de sistemas': 'Ingeniería de Sistemas'
         };
 
         const consultaMateria = Object.keys(consultasMaterias).find(consulta => 
