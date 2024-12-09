@@ -2,7 +2,49 @@ const { Carrera, Materia } = require('../db.js'); // Asumiendo que los modelos e
 const https = require("https");
 const { getChatGPTResponse } = require('./chatgpt');
 
-// Funciones auxiliares: limpiarTexto, obtenerContexto, manejarRespuestaPredefinida se mantienen igual...
+function limpiarTexto(texto) {
+    const stopWords = ["de", "la", "y", "a", "el", "en", "por", "con", "que", "un", "una", "los", "las", "para", "del"];
+    return texto
+        .toLowerCase()
+        .split(" ")
+        .filter(word => !stopWords.includes(word))
+        .join(" ");
+}
+
+function obtenerContexto(texto) {
+    if (/asesor(es)?/i.test(texto)) {
+        return "Consulta sobre asesores universitarios. Responde con información de contacto.";
+    }
+    if (/precio|costo|tarifa/i.test(texto)) {
+        return "Consulta sobre precios o tarifas. Responde que se contacte con asesores.";
+    }
+    if (/hola|buenos días|qué tal/i.test(texto)) {
+        return "Saludo inicial.";
+    }
+
+    
+    if (/universidad/i.test(texto)) {
+        return "Consulta general sobre la universidad.";
+    }
+    return "Consulta desconocida.";
+}
+
+function manejarRespuestaPredefinida(texto) {
+    if (/hola|buenos días|qué tal/i.test(texto)) {
+        return "¡Hola! Soy el asistente de la universidad del valle. ¿En qué puedo ayudarte?";
+    }
+    if (/asesor(es)?/i.test(texto)) {
+        return "Nuestros asesores son: Juan Pérez (+591 12345678) y Ana López (+591 87654321). Contáctalos para más información.";
+    }
+    if (/precio|costo|tarifa/i.test(texto)) {
+        return "Para conocer precios o tarifas, por favor contacta a nuestros asesores: Juan Pérez (+591 12345678).";
+    }
+
+    if (/ubicación|dirección|dónde está|ubicado/i.test(texto)) {
+        return "Nuestra ubicación es: Campus Univalle Séptimo Anillo, Santa Cruz de la Sierra. Estamos ubicados en un lugar estratégico y de fácil acceso.";
+    }
+    return null;
+}
 
 async function buscarInformacionCarrera(nombreCarrera) {
     try {
